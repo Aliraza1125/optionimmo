@@ -1,0 +1,27 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # A. Forcer le JSON pour les réponses de l'API
+  AddType application/json .json
+
+  # B. PROXY API (Doit être AVANT le routage React)
+  # On vérifie que la requête commence bien par /api
+  RewriteCond %{REQUEST_URI} ^/api [NC]
+  RewriteRule ^api/(.*)$ http://127.0.0.1:3000/api/$1 [P,L]
+
+  # --- BB. GESTION DU HTTPS ---
+  # Force la connexion sécurisée si ce n'est pas déjà le cas
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # C. ROUTAGE REACT (Gestion des Single Page Apps)
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  
+  # Si ce n'est pas un fichier réel (-f) ni un dossier réel (-d)
+  # Et que ce n'est PAS une requête /api (sécurité supplémentaire)
+  RewriteCond %{REQUEST_URI} !^/api [NC]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
